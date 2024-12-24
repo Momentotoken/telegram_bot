@@ -1,0 +1,37 @@
+from telegram import Bot
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Bot settings
+BOT_TOKEN = 'Your_Telegram_Bot_Token'
+CHANNEL_ID = '@Your_Channel_ID'
+
+# Create the bot instance
+bot = Bot(token=BOT_TOKEN)
+
+@app.route('/transaction', methods=['POST'])
+def transaction_webhook():
+    data = request.json  # Receive transaction data from pump.fun
+    if data:
+        # Extract transaction details
+        buyer = data.get('buyer', 'Unknown')
+        amount = data.get('amount', '0')
+        currency = data.get('currency', 'Unknown')
+        tx_hash = data.get('transaction_hash', 'No Hash')
+
+        # Message to send to the channel
+        message = f"""
+🚀 **New Transaction Alert!** 🚀
+👤 Buyer: {buyer}
+💰 Amount: {amount} {currency}
+🔗 [Transaction Details](https://explorer.pump.fun/{tx_hash})
+        """
+        # Send the message to the Telegram channel
+        bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
+
+        return jsonify({'status': 'success'}), 200
+    return jsonify({'status': 'error'}), 400
+
+if __name__ == '__main__':
+    app.run(port=5000)
